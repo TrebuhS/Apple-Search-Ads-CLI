@@ -17,6 +17,7 @@ import (
 	"github.com/trebuhs/asa-cli/internal/config"
 	"github.com/trebuhs/asa-cli/internal/models"
 	"github.com/trebuhs/asa-cli/internal/output"
+	"github.com/trebuhs/asa-cli/internal/services"
 )
 
 var (
@@ -25,6 +26,7 @@ var (
 	verbose      bool
 	noColor      bool
 	globalOrgID  string
+	forceFlag    bool
 )
 
 var rootCmd = &cobra.Command{
@@ -47,6 +49,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Verbose output")
 	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "Disable color output")
 	rootCmd.PersistentFlags().StringVar(&globalOrgID, "org-id", "", "Organization ID (overrides config)")
+	rootCmd.PersistentFlags().BoolVar(&forceFlag, "force", false, "Skip budget/bid safety checks")
 }
 
 func Execute() error {
@@ -239,6 +242,67 @@ func parseSorts(sorts []string) []models.OrderByItem {
 		})
 	}
 	return items
+}
+
+// checkBudgetLimit validates a daily budget against the configured max.
+func checkBudgetLimit(amount string) error {
+	if forceFlag {
+		return nil
+	}
+	cfg, err := config.Load()
+	if err != nil {
+		return nil // don't block on config errors
+	}
+	val, err := strconv.ParseFloat(amount, 64)
+	if err != nil {
+		return nil
+	}
+	return cfg.CheckDailyBudget(val)
+}
+
+// checkBidLimit validates a bid amount against the configured max.
+func checkBidLimit(amount string) error {
+	if forceFlag {
+		return nil
+	}
+	cfg, err := config.Load()
+	if err != nil {
+		return nil
+	}
+	val, err := strconv.ParseFloat(amount, 64)
+	if err != nil {
+		return nil
+	}
+	return cfg.CheckBid(val)
+}
+
+// resolveOrgCurrency fetches /acls and returns the currency for the given org ID.
+func resolveOrgCurrency(client *api.Client) (string, error) {
+	svc := services.NewACLService(client)
+	acls, err := svc.GetACLs()
+	if err != nil {
+		return "", fmt.Errorf("fetching org currency: %w", err)
+	}
+
+	// Match against the org ID set on the client
+	orgID := globalOrgID
+	if orgID == "" {
+		cfg, _ := config.Load()
+		if cfg != nil {
+			orgID = cfg.OrgID
+		}
+	}
+
+	for _, acl := range acls {
+		if orgID == "" || strconv.FormatInt(acl.OrgID, 10) == orgID {
+			return acl.Currency, nil
+		}
+	}
+
+	if len(acls) > 0 {
+		return acls[0].Currency, nil
+	}
+	return "", fmt.Errorf("could not resolve org currency: no organizations found")
 }
 
 // exitWithError prints an error and exits with the given code.

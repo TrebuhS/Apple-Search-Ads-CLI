@@ -88,9 +88,12 @@ Scoped under a campaign with `--campaign-id`.
 ```bash
 asa-cli adgroups list --campaign-id 123
 asa-cli adgroups create --campaign-id 123 \
-  --name "Exact Match" --default-bid 1.50 --cpa-goal 5.00
+  --name "Exact Match" --default-bid 1.50 --cpa-goal 5.00 \
+  --start-time "$(date -u +%Y-%m-%dT%H:%M:%S.000)"
 asa-cli adgroups update 456 --campaign-id 123 --default-bid 2.00
 ```
+
+Search match (automated keywords) is **off by default**. Enable explicitly with `--auto-keywords true` when creating discovery ad groups.
 
 ### Keywords
 
@@ -143,7 +146,9 @@ asa-cli reports campaigns \
   --granularity WEEKLY --group-by countryOrRegion,deviceClass -o json
 ```
 
-Metrics: impressions, taps, installs, new downloads, redownloads, TTR, conversion rate, avg CPA, avg CPT, spend.
+Use `--grand-totals` on campaign reports to get aggregated totals across all campaigns.
+
+Metrics: impressions, taps, totalInstalls (tapInstalls + viewInstalls), totalNewDownloads, totalRedownloads, TTR, totalInstallRate, tapInstallRate, totalAvgCPI, tapInstallCPI, avgCPT, avgCPM, spend.
 
 ### Apps & Geo Search
 
@@ -220,6 +225,26 @@ Override any config value:
 | `--org-id` | | Organization ID (overrides config) |
 | `--verbose` | `-v` | Show HTTP request/response details |
 | `--no-color` | | Disable colored output |
+| `--force` | | Skip budget/bid safety checks |
+
+## Budget & Bid Safety
+
+To prevent accidental overspend (e.g. a typo setting `--daily-budget 500` instead of `5`), you can configure spend limits in `~/.asa-cli/config.yaml`:
+
+```yaml
+max_daily_budget: 20   # max allowed daily budget per campaign
+max_bid: 5             # max allowed bid per keyword/ad group
+```
+
+Any `campaigns create/update`, `adgroups create/update`, or `keywords create/update` that exceeds these limits will be blocked:
+
+```
+$ asa-cli campaigns create --name "Test" --daily-budget 50 ...
+Error: daily budget 50.00 exceeds configured max_daily_budget (20.00).
+Update max_daily_budget in ~/.asa-cli/config.yaml or use --force to override
+```
+
+Use `--force` to bypass the check when intentional. If the limits are not set (or set to 0), no checks are performed.
 
 ## Contributing
 

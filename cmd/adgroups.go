@@ -93,7 +93,7 @@ func init() {
 	adgroupsCreateCmd.Flags().StringVar(&agBid, "default-bid", "", "Default bid amount (e.g. 1.50)")
 	adgroupsCreateCmd.Flags().StringVar(&agCpaGoal, "cpa-goal", "", "CPA goal amount")
 	adgroupsCreateCmd.Flags().StringVar(&agStatus, "status", "ENABLED", "Status")
-	adgroupsCreateCmd.Flags().StringVar(&agAutoKW, "auto-keywords", "true", "Automated keywords opt-in (true/false)")
+	adgroupsCreateCmd.Flags().StringVar(&agAutoKW, "auto-keywords", "false", "Automated keywords opt-in (true/false)")
 	adgroupsCreateCmd.Flags().StringVar(&agStartTime, "start-time", "", "Start time (ISO 8601)")
 	adgroupsCreateCmd.Flags().StringVar(&agEndTime, "end-time", "", "End time (ISO 8601)")
 	adgroupsCreateCmd.MarkFlagRequired("name")
@@ -192,16 +192,26 @@ func runAdGroupsCreate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	currency, err := resolveOrgCurrency(client)
+	if err != nil {
+		return err
+	}
+
+	if err := checkBidLimit(agBid); err != nil {
+		return err
+	}
+
 	autoKW := agAutoKW == "true"
 	adgroup := &models.AdGroup{
 		Name:                   agName,
 		Status:                 agStatus,
-		DefaultBidAmount:       &models.Money{Amount: agBid, Currency: "USD"},
+		DefaultBidAmount:       &models.Money{Amount: agBid, Currency: currency},
 		AutomatedKeywordsOptIn: autoKW,
+		PricingModel:           "CPC",
 	}
 
 	if agCpaGoal != "" {
-		adgroup.CpaGoal = &models.Money{Amount: agCpaGoal, Currency: "USD"}
+		adgroup.CpaGoal = &models.Money{Amount: agCpaGoal, Currency: currency}
 	}
 	if agStartTime != "" {
 		adgroup.StartTime = agStartTime
@@ -238,13 +248,22 @@ func runAdGroupsUpdate(cmd *cobra.Command, args []string) error {
 		update.Name = agName
 		hasUpdate = true
 	}
-	if cmd.Flags().Changed("default-bid") {
-		update.DefaultBidAmount = &models.Money{Amount: agBid, Currency: "USD"}
-		hasUpdate = true
-	}
-	if cmd.Flags().Changed("cpa-goal") {
-		update.CpaGoal = &models.Money{Amount: agCpaGoal, Currency: "USD"}
-		hasUpdate = true
+	if cmd.Flags().Changed("default-bid") || cmd.Flags().Changed("cpa-goal") {
+		currency, err := resolveOrgCurrency(client)
+		if err != nil {
+			return err
+		}
+		if cmd.Flags().Changed("default-bid") {
+			if err := checkBidLimit(agBid); err != nil {
+				return err
+			}
+			update.DefaultBidAmount = &models.Money{Amount: agBid, Currency: currency}
+			hasUpdate = true
+		}
+		if cmd.Flags().Changed("cpa-goal") {
+			update.CpaGoal = &models.Money{Amount: agCpaGoal, Currency: currency}
+			hasUpdate = true
+		}
 	}
 	if cmd.Flags().Changed("status") {
 		update.Status = agStatus

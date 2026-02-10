@@ -184,6 +184,17 @@ func runKWCreate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	currency, err := resolveOrgCurrency(client)
+	if err != nil {
+		return err
+	}
+
+	if kwBid != "" {
+		if err := checkBidLimit(kwBid); err != nil {
+			return err
+		}
+	}
+
 	var keywords []models.Keyword
 	for _, text := range kwTexts {
 		kw := models.Keyword{
@@ -191,7 +202,7 @@ func runKWCreate(cmd *cobra.Command, args []string) error {
 			MatchType: kwMatchType,
 		}
 		if kwBid != "" {
-			kw.BidAmount = &models.Money{Amount: kwBid, Currency: "USD"}
+			kw.BidAmount = &models.Money{Amount: kwBid, Currency: currency}
 		}
 		keywords = append(keywords, kw)
 	}
@@ -217,7 +228,14 @@ func runKWUpdate(cmd *cobra.Command, args []string) error {
 		update.Status = kwStatus
 	}
 	if cmd.Flags().Changed("bid") {
-		update.BidAmount = &models.Money{Amount: kwBid, Currency: "USD"}
+		if err := checkBidLimit(kwBid); err != nil {
+			return err
+		}
+		currency, err := resolveOrgCurrency(client)
+		if err != nil {
+			return err
+		}
+		update.BidAmount = &models.Money{Amount: kwBid, Currency: currency}
 	}
 
 	svc := services.NewKeywordService(client)

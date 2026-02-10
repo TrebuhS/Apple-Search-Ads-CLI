@@ -18,6 +18,7 @@ type AdGroup struct {
 	ModificationTime      string   `json:"modificationTime,omitempty"`
 	TargetingDimensions   *TargetingDimensions `json:"targetingDimensions,omitempty"`
 	PaymentModel          string   `json:"paymentModel,omitempty"`
+	PricingModel          string   `json:"pricingModel,omitempty"`
 }
 
 // TargetingDimensions for ad group targeting.

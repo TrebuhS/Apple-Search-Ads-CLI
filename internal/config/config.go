@@ -9,11 +9,13 @@ import (
 )
 
 type Config struct {
-	ClientID       string `mapstructure:"client_id"`
-	TeamID         string `mapstructure:"team_id"`
-	KeyID          string `mapstructure:"key_id"`
-	OrgID          string `mapstructure:"org_id"`
-	PrivateKeyPath string `mapstructure:"private_key_path"`
+	ClientID       string  `mapstructure:"client_id"`
+	TeamID         string  `mapstructure:"team_id"`
+	KeyID          string  `mapstructure:"key_id"`
+	OrgID          string  `mapstructure:"org_id"`
+	PrivateKeyPath string  `mapstructure:"private_key_path"`
+	MaxDailyBudget float64 `mapstructure:"max_daily_budget"`
+	MaxBid         float64 `mapstructure:"max_bid"`
 }
 
 var (
@@ -98,6 +100,26 @@ func Load() (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+// CheckDailyBudget validates a daily budget amount against the configured limit.
+// Returns nil if no limit is set or the amount is within the limit.
+func (c *Config) CheckDailyBudget(amount float64) error {
+	if c.MaxDailyBudget > 0 && amount > c.MaxDailyBudget {
+		return fmt.Errorf("daily budget %.2f exceeds configured max_daily_budget (%.2f). Update max_daily_budget in %s/config.yaml or use --force to override",
+			amount, c.MaxDailyBudget, ConfigDir())
+	}
+	return nil
+}
+
+// CheckBid validates a bid amount against the configured limit.
+// Returns nil if no limit is set or the amount is within the limit.
+func (c *Config) CheckBid(amount float64) error {
+	if c.MaxBid > 0 && amount > c.MaxBid {
+		return fmt.Errorf("bid %.2f exceeds configured max_bid (%.2f). Update max_bid in %s/config.yaml or use --force to override",
+			amount, c.MaxBid, ConfigDir())
+	}
+	return nil
 }
 
 func Save(cfg *Config, profile string) error {

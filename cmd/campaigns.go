@@ -185,13 +185,25 @@ func runCampaignsCreate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	currency, err := resolveOrgCurrency(client)
+	if err != nil {
+		return err
+	}
+
+	if err := checkBudgetLimit(campDaily); err != nil {
+		return err
+	}
+
 	campaign := &models.Campaign{
 		Name:               campName,
 		AdamID:             campAppID,
 		Status:             campStatus,
 		CountriesOrRegions: strings.Split(campCountries, ","),
-		BudgetAmount:       &models.Money{Amount: campBudget, Currency: "USD"},
-		DailyBudgetAmount:  &models.Money{Amount: campDaily, Currency: "USD"},
+		BudgetAmount:       &models.Money{Amount: campBudget, Currency: currency},
+		DailyBudgetAmount:  &models.Money{Amount: campDaily, Currency: currency},
+		AdChannelType:      "SEARCH",
+		SupplySources:      []string{"APPSTORE_SEARCH_RESULTS"},
+		BillingEvent:       "TAPS",
 	}
 
 	svc := services.NewCampaignService(client)
@@ -222,13 +234,22 @@ func runCampaignsUpdate(cmd *cobra.Command, args []string) error {
 		update.Name = campName
 		hasUpdate = true
 	}
-	if cmd.Flags().Changed("budget") {
-		update.BudgetAmount = &models.Money{Amount: campBudget, Currency: "USD"}
-		hasUpdate = true
-	}
-	if cmd.Flags().Changed("daily-budget") {
-		update.DailyBudgetAmount = &models.Money{Amount: campDaily, Currency: "USD"}
-		hasUpdate = true
+	if cmd.Flags().Changed("budget") || cmd.Flags().Changed("daily-budget") {
+		currency, err := resolveOrgCurrency(client)
+		if err != nil {
+			return err
+		}
+		if cmd.Flags().Changed("budget") {
+			update.BudgetAmount = &models.Money{Amount: campBudget, Currency: currency}
+			hasUpdate = true
+		}
+		if cmd.Flags().Changed("daily-budget") {
+			if err := checkBudgetLimit(campDaily); err != nil {
+				return err
+			}
+			update.DailyBudgetAmount = &models.Money{Amount: campDaily, Currency: currency}
+			hasUpdate = true
+		}
 	}
 	if cmd.Flags().Changed("status") {
 		update.Status = campStatus
