@@ -1,0 +1,26 @@
+# Compiled binary
+/asa
+
+# OS files
+.DS_Store
+
+# IDE / local tools
+.idea/
+.vscode/
+.claude/
+
+# Config/credentials (should never be in repo)
+*.pem
+.asa/
+token_cache.json
+
+# Logs
+*.log
+firebase-debug.log
+
+# Environment
+.env
+.env.*
+
+# Build artifacts
+dist/
