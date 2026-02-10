@@ -8,7 +8,13 @@ Built to be scriptable and AI-agent friendly. Use `-o json` for machine-readable
 
 ### Install
 
-Requires [Go 1.24+](https://golang.org/dl/).
+**Homebrew (recommended):**
+
+```bash
+brew install TrebuhS/tap/asa-cli
+```
+
+**From source** (requires [Go 1.24+](https://golang.org/dl/)):
 
 ```bash
 git clone https://github.com/TrebuhS/asa-cli.git
