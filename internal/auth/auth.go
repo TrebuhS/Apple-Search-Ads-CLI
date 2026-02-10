@@ -209,7 +209,7 @@ func ValidateConfig(cfg *config.Config) error {
 		missing = append(missing, "private_key_path")
 	}
 	if len(missing) > 0 {
-		return fmt.Errorf("missing required config: %s\nRun 'asa configure' to set up credentials", strings.Join(missing, ", "))
+		return fmt.Errorf("missing required config: %s\nRun 'asa-cli configure' to set up credentials", strings.Join(missing, ", "))
 	}
 
 	// Validate key file exists

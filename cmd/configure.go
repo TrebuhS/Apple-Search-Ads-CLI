@@ -22,8 +22,8 @@ Credential Setup:
   4. Generate a new key pair — download the private key .pem file
   5. Note the Client ID, Team ID, Key ID from the API settings page
   6. Your Org ID is visible in the account URL or API settings
-  7. Run: asa configure --client-id "..." --team-id "..." --key-id "..." --org-id "..." --private-key-path "/path/to/key.pem"
-  8. Verify with: asa whoami`,
+  7. Run: asa-cli configure --client-id "..." --team-id "..." --key-id "..." --org-id "..." --private-key-path "/path/to/key.pem"
+  8. Verify with: asa-cli whoami`,
 	RunE: runConfigure,
 }
 
@@ -77,7 +77,7 @@ func runConfigure(cmd *cobra.Command, args []string) error {
 		profile = "default"
 	}
 	fmt.Printf("Configuration saved for profile '%s'.\n", profile)
-	fmt.Println("Verify with: asa whoami")
+	fmt.Println("Verify with: asa-cli whoami")
 	return nil
 }
 
@@ -118,7 +118,7 @@ func runInteractiveConfigure() error {
 		profile = "default"
 	}
 	fmt.Printf("\nConfiguration saved for profile '%s'.\n", profile)
-	fmt.Println("Verify with: asa whoami")
+	fmt.Println("Verify with: asa-cli whoami")
 	return nil
 }
 

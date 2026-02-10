@@ -1,4 +1,4 @@
-BINARY_NAME=asa
+BINARY_NAME=asa-cli
 BUILD_DIR=.
 GOBIN=$(shell go env GOPATH)/bin
 INSTALL_DIR=$(GOBIN)

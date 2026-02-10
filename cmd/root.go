@@ -24,7 +24,7 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "asa",
+	Use:   "asa-cli",
 	Short: "Apple Search Ads CLI",
 	Long:  "A command-line interface for the Apple Search Ads Campaign Management API v5.",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
