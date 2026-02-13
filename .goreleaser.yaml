@@ -22,6 +22,7 @@ brews:
   - repository:
       owner: TrebuhS
       name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     name: asa-cli
     homepage: "https://github.com/TrebuhS/Apple-Search-Ads-CLI"
     description: "CLI for the Apple Search Ads Campaign Management API v5"
